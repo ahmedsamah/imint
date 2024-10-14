@@ -1,0 +1,931 @@
+---
+title: "Simulations - Monthly"
+output: 
+  pdf_document:
+    latex_engine: xelatex
+editor_options:
+  chunk_output_type: console
+header-includes:
+  - \usepackage{adjustbox}
+  - \usepackage{longtable}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+library(tidyverse)
+library(kableExtra)
+```
+
+\newpage
+## Scenario 1
+
+### ETS + ETS
+```{r, results = 'asis', message=FALSE}
+pc1 <- read_csv("pc/pc1.csv")
+pc3 <- read_csv("pc/pc3.csv")
+pc6 <- read_csv("pc/pc6.csv")
+pc12 <- read_csv("pc/pc12.csv")
+pc24 <- read_csv("pc/pc24.csv")
+
+cnames <- c("Method", "h = 1", "3", "6", "12", "24")
+cnames2 <- c("M", "h1", "h3", "h6", "h12", "h24")
+
+total <- data.frame("method" = pc1[,1], 
+                     "h = 1" = pc1[,2],
+                     "3" = pc3[,2],
+                     "6" = pc6[,2],
+                     "12" = pc12[,2],
+                      "24" = pc24[,2]) %>% 
+  mutate(across(where(is.numeric), ~ round(., 3)))
+colnames(total) <- cnames
+
+middle <- data.frame("method" = pc1[,1], 
+                     "h = 1" = pc1[,3],
+                     "3" = pc3[,3],
+                     "6" = pc6[,3],
+                     "12" = pc12[,3],
+                      "24" = pc24[,3]) %>% 
+  mutate(across(where(is.numeric), ~ round(., 3)))
+colnames(middle) <- cnames2
+
+bottom <- data.frame("method" = pc1[,1], 
+                     "h = 1" = pc1[,4],
+                     "3" = pc3[,4],
+                     "6" = pc6[,4],
+                     "12" = pc12[,4],
+                      "24" = pc24[,4]) %>% 
+  mutate(across(where(is.numeric), ~ round(., 3)))
+colnames(bottom) <- cnames
+
+all <- data.frame("method" = pc1[,1], 
+                     "h = 1" = pc1[,5],
+                     "3" = pc3[,5],
+                     "6" = pc6[,5],
+                     "12" = pc12[,5],
+                      "24" = pc24[,5]) %>% 
+  mutate(across(where(is.numeric), ~ round(., 3)))
+colnames(all) <- cnames2
+
+all_total <- cbind(all, total[,-1]) %>% 
+  slice(c(1, 2, 7, 3, 8, 4, 9, 5, 10, 6, 11)) %>% 
+  mutate(W = c("Base", "OLS", "OLS", "WLSs", "WLSs", "WLSv", "WLSv", "MinT(Sample)", "MinT(Sample)",
+               "MinT(Shrink)", "MinT(Shrink)"),
+    ImmuteMethod = c(" ", "I", "I-MinT", "I", "I-MinT", "I", "I-MinT", "I", "I-MinT", "I", "I-MinT")) %>% 
+  select(c(12,13,2:11))
+  
+mid_bottom <- cbind(middle, bottom[,-1]) %>% 
+  slice(c(1, 2, 7, 3, 8, 4, 9, 5, 10, 6, 11)) %>% 
+  mutate(W = c("Base", "OLS", "OLS", "WLSs", "WLSs", "WLSv", "WLSv", "MinT(Sample)", "MinT(Sample)",
+               "MinT(Shrink)", "MinT(Shrink)"),
+    ImmuteMethod = c(" ", "I", "I-MinT", "I", "I-MinT", "I", "I-MinT", "I", "I-MinT", "I", "I-MinT")) %>% 
+  select(c(12,13,2:11))
+
+#### Tables ####
+
+at_table <- all_total %>% 
+  kable(escape = FALSE,
+        caption="\\label{tab:tourismets}Out-of-sample forecast accuracy for ETS forecasts for all levels under Scenario 1.",
+        col.names = c(" ", " ", "h = 1", "3", "6", "12", "24", "h = 1", "3", "6", "12", "24")
+        ) %>% 
+  kable_styling(full_width = FALSE,
+                latex_options = c("hold_position"),
+                font_size = 7) %>% 
+  add_header_above(c(" " =2, "All Series" = 5, "Total" = 5), bold = TRUE) %>% 
+  add_header_above(c("ETS+ETS"=12), bold = TRUE) %>% 
+  column_spec(c(1), width = "1.5cm") %>% 
+  column_spec(c(2), width = "1cm") %>%
+  column_spec(3, bold = ifelse(all_total$`h1`==min(all_total$`h1`), T, F), width = "1cm") %>% 
+  column_spec(4, bold = ifelse(all_total$`h3`==min(all_total$`h3`), T, F), width = "1cm") %>% 
+  column_spec(5, bold = ifelse(all_total$`h6`==min(all_total$`h6`), T, F), width = "1cm") %>% 
+  column_spec(6, bold = ifelse(all_total$`h12`==min(all_total$`h12`), T, F), width = "1cm") %>% 
+  column_spec(7, bold = ifelse(all_total$`h24`==min(all_total$`h24`), T, F), width = "1cm") %>% 
+  column_spec(8:12, width = "1cm") %>% 
+  row_spec(1, bold = FALSE, italic = TRUE) %>% 
+  collapse_rows(1, latex_hline ="major")
+
+
+mb_table <- mid_bottom %>% 
+  kable(escape = FALSE,
+      #  caption="\\label{tab:tourismets}Out-of-sample forecast accuracy for ETS forecasts for all levels under Scenario 1.",
+        col.names = c(" ", " ", "h = 1", "3", "6", "12", "24", "h = 1", "3", "6", "12", "24")
+        ) %>% 
+  kable_styling(full_width = FALSE,
+                latex_options = c("hold_position"),
+                font_size = 7) %>% 
+  add_header_above(c(" " =2, "Middle" = 5, "Bottom" = 5), bold = TRUE) %>% 
+  column_spec(c(1), width = "1.5cm") %>% 
+  column_spec(c(2), width = "1cm") %>%
+  column_spec(3, bold = ifelse(mid_bottom$`h1`==min(mid_bottom$`h1`), T, F), width = "1cm") %>% 
+  column_spec(4, bold = ifelse(mid_bottom$`h3`==min(mid_bottom$`h3`), T, F), width = "1cm") %>% 
+  column_spec(5, bold = ifelse(mid_bottom$`h6`==min(mid_bottom$`h6`), T, F), width = "1cm") %>% 
+  column_spec(6, bold = ifelse(mid_bottom$`h12`==min(mid_bottom$`h12`), T, F), width = "1cm") %>% 
+  column_spec(7, bold = ifelse(mid_bottom$`h24`==min(mid_bottom$`h24`), T, F), width = "1cm") %>% 
+  column_spec(8, bold = ifelse(mid_bottom$`h = 1`==min(mid_bottom$`h = 1`), T, F), width = "1cm") %>% 
+  column_spec(9, bold = ifelse(mid_bottom$`3`==min(mid_bottom$`3`), T, F), width = "1cm") %>% 
+  column_spec(10, bold = ifelse(mid_bottom$`6`==min(mid_bottom$`6`), T, F), width = "1cm") %>% 
+  column_spec(11, bold = ifelse(mid_bottom$`12`==min(mid_bottom$`12`), T, F), width = "1cm") %>% 
+  column_spec(12, bold = ifelse(mid_bottom$`24`==min(mid_bottom$`24`), T, F), width = "1cm") %>% 
+  row_spec(1, bold = FALSE, italic = TRUE) %>% 
+  collapse_rows(1, latex_hline ="major")
+
+cat(paste0(at_table, "\\vspace{-2.5em}", mb_table), sep = "")
+
+```
+
+\newpage
+Scenario 1
+
+### ETS + ARIMA
+```{r, results = 'asis', message=FALSE}
+pc1_ea <- read_csv("pc/pc1_ea.csv")
+pc3_ea <- read_csv("pc/pc3_ea.csv")
+pc6_ea <- read_csv("pc/pc6_ea.csv")
+pc12_ea <- read_csv("pc/pc12_ea.csv")
+pc24_ea <- read_csv("pc/pc24_ea.csv")
+
+cnames <- c("Method", "h = 1", "3", "6", "12", "24")
+cnames2 <- c("M", "h1", "h3", "h6", "h12", "h24")
+
+total_ea <- data.frame("method" = pc1_ea[,1], 
+                     "h = 1" = pc1_ea[,2],
+                     "3" = pc3_ea[,2],
+                     "6" = pc6_ea[,2],
+                     "12" = pc12_ea[,2],
+                      "24" = pc24_ea[,2]) %>% 
+  mutate(across(where(is.numeric), ~ round(., 3)))
+colnames(total_ea) <- cnames
+
+middle_ea <- data.frame("method" = pc1_ea[,1], 
+                     "h = 1" = pc1_ea[,3],
+                     "3" = pc3_ea[,3],
+                     "6" = pc6_ea[,3],
+                     "12" = pc12_ea[,3],
+                      "24" = pc24_ea[,3]) %>% 
+  mutate(across(where(is.numeric), ~ round(., 3)))
+colnames(middle_ea) <- cnames2
+
+bottom_ea <- data.frame("method" = pc1_ea[,1], 
+                     "h = 1" = pc1_ea[,4],
+                     "3" = pc3_ea[,4],
+                     "6" = pc6_ea[,4],
+                     "12" = pc12_ea[,4],
+                      "24" = pc24_ea[,4]) %>% 
+  mutate(across(where(is.numeric), ~ round(., 3)))
+colnames(bottom_ea) <- cnames
+
+all_ea <- data.frame("method" = pc1_ea[,1], 
+                     "h = 1" = pc1_ea[,5],
+                     "3" = pc3_ea[,5],
+                     "6" = pc6_ea[,5],
+                     "12" = pc12_ea[,5],
+                      "24" = pc24_ea[,5]) %>% 
+  mutate(across(where(is.numeric), ~ round(., 3)))
+colnames(all_ea) <- cnames2
+
+all_total_ea <- cbind(all_ea, total_ea[,-1]) %>% 
+  slice(c(1, 2, 7, 3, 8, 4, 9, 5, 10, 6, 11)) %>% 
+  mutate(W = c("Base", "OLS", "OLS", "WLSs", "WLSs", "WLSv", "WLSv", "MinT(Sample)", "MinT(Sample)",
+               "MinT(Shrink)", "MinT(Shrink)"),
+    ImmuteMethod = c(" ", "I", "I-MinT", "I", "I-MinT", "I", "I-MinT", "I", "I-MinT", "I", "I-MinT")) %>% 
+  select(c(12,13,2:11))
+  
+mid_bottom_ea <- cbind(middle_ea, bottom_ea[,-1]) %>% 
+  slice(c(1, 2, 7, 3, 8, 4, 9, 5, 10, 6, 11)) %>% 
+  mutate(W = c("Base", "OLS", "OLS", "WLSs", "WLSs", "WLSv", "WLSv", "MinT(Sample)", "MinT(Sample)",
+               "MinT(Shrink)", "MinT(Shrink)"),
+    ImmuteMethod = c(" ", "I", "I-MinT", "I", "I-MinT", "I", "I-MinT", "I", "I-MinT", "I", "I-MinT")) %>% 
+  select(c(12,13,2:11))
+
+#### Tables ####
+
+at_table_ea <- all_total_ea %>% 
+  kable(escape = FALSE,
+        caption="\\label{tab:tourismets}Out-of-sample forecast accuracy when ETS forecasts at top-level and ARIMA forecasts for other levels - under Scenario 1.",
+        col.names = c(" ", " ", "h = 1", "3", "6", "12", "24", "h = 1", "3", "6", "12", "24")
+        ) %>% 
+  kable_styling(full_width = FALSE,
+                latex_options = c("hold_position"),
+                font_size = 7) %>% 
+  add_header_above(c(" " =2, "All Series" = 5, "Total" = 5), bold = TRUE) %>% 
+  add_header_above(c("ETS+ARIMA"=12), bold = TRUE) %>% 
+  column_spec(c(1), width = "1.5cm") %>% 
+  column_spec(c(2), width = "1cm") %>%
+  column_spec(3, bold = ifelse(all_total_ea$`h1`==min(all_total_ea$`h1`), T, F), width = "1cm") %>% 
+  column_spec(4, bold = ifelse(all_total_ea$`h3`==min(all_total_ea$`h3`), T, F), width = "1cm") %>% 
+  column_spec(5, bold = ifelse(all_total_ea$`h6`==min(all_total_ea$`h6`), T, F), width = "1cm") %>% 
+  column_spec(6, bold = ifelse(all_total_ea$`h12`==min(all_total_ea$`h12`), T, F), width = "1cm") %>% 
+  column_spec(7, bold = ifelse(all_total_ea$`h24`==min(all_total_ea$`h24`), T, F), width = "1cm") %>% 
+  column_spec(8:12, width = "1cm") %>% 
+  row_spec(1, bold = FALSE, italic = TRUE) %>% 
+  collapse_rows(1, latex_hline ="major")
+
+
+mb_table_ea <- mid_bottom_ea %>% 
+  kable(escape = FALSE,
+      #  caption="\\label{tab:tourismets}Out-of-sample forecast accuracy for ETS forecasts for all levels under Scenario 1.",
+        col.names = c(" ", " ", "h = 1", "3", "6", "12", "24", "h = 1", "3", "6", "12", "24")
+        ) %>% 
+  kable_styling(full_width = FALSE,
+                latex_options = c("hold_position"),
+                font_size = 7) %>% 
+  add_header_above(c(" " =2, "Middle" = 5, "Bottom" = 5), bold = TRUE) %>% 
+  column_spec(c(1), width = "1.5cm") %>% 
+  column_spec(c(2), width = "1cm") %>%
+  column_spec(3, bold = ifelse(mid_bottom_ea$`h1`==min(mid_bottom_ea$`h1`), T, F), width = "1cm") %>% 
+  column_spec(4, bold = ifelse(mid_bottom_ea$`h3`==min(mid_bottom_ea$`h3`), T, F), width = "1cm") %>% 
+  column_spec(5, bold = ifelse(mid_bottom_ea$`h6`==min(mid_bottom_ea$`h6`), T, F), width = "1cm") %>% 
+  column_spec(6, bold = ifelse(mid_bottom_ea$`h12`==min(mid_bottom_ea$`h12`), T, F), width = "1cm") %>% 
+  column_spec(7, bold = ifelse(mid_bottom_ea$`h24`==min(mid_bottom_ea$`h24`), T, F), width = "1cm") %>% 
+  column_spec(8, bold = ifelse(mid_bottom_ea$`h = 1`==min(mid_bottom_ea$`h = 1`), T, F), width = "1cm") %>% 
+  column_spec(9, bold = ifelse(mid_bottom_ea$`3`==min(mid_bottom_ea$`3`), T, F), width = "1cm") %>% 
+  column_spec(10, bold = ifelse(mid_bottom_ea$`6`==min(mid_bottom_ea$`6`), T, F), width = "1cm") %>% 
+  column_spec(11, bold = ifelse(mid_bottom_ea$`12`==min(mid_bottom_ea$`12`), T, F), width = "1cm") %>% 
+  column_spec(12, bold = ifelse(mid_bottom_ea$`24`==min(mid_bottom_ea$`24`), T, F), width = "1cm") %>% 
+  row_spec(1, bold = FALSE, italic = TRUE) %>% 
+  collapse_rows(1, latex_hline ="major")
+
+cat(paste0(at_table_ea, "\\vspace{-2.5em}", mb_table_ea), sep = "")
+
+```
+
+```{r, message=FALSE,  warning=FALSE, include=FALSE}
+cnames_chart <- c("Method", "1", "3", "6", "12", "24")
+
+colnames(total) <- cnames_chart
+colnames(middle) <- cnames_chart
+colnames(bottom) <- cnames_chart
+colnames(all) <- cnames_chart
+
+labels <- c(rep("Total", nrow(total) - 1),
+            rep("Middle", nrow(middle) - 1),
+            rep("Bottom", nrow(bottom) - 1),
+            rep("All series", nrow(all) - 1))
+
+series <- rbind(total[-1,], 
+                middle[-1,],
+                bottom[-1,],
+                all[-1,])
+
+series$Category <- labels
+
+series <- series %>%
+  mutate(Weighting = case_when(
+    grepl("ols", Method) ~ "OLS",
+    grepl("wlss", Method) ~ "WLSs",
+    grepl("wlsv", Method) ~ "WLSv",
+    grepl("sam", Method) ~ "MinT(Sample)",
+    grepl("shrink", Method) ~ "MinT(Shrink)"
+  ),
+  Immute = case_when(
+    grepl("I", Method) ~ "I",
+    grepl("iMinT", Method) ~ "I-MinT"
+  ))
+
+series_long <- series %>%
+  pivot_longer(cols = 2:6, 
+               names_to = "Horizon", 
+               values_to = "PC") 
+
+series_long$Horizon <- factor(series_long$Horizon, 
+                               levels = c("1", "3", "6", "12", "24"))
+
+
+series_long %>% 
+#  filter(Weighting == "WLSv") %>% 
+  filter(Category != "Total") %>% 
+  ggplot(aes(x = Horizon, y = PC, color = Weighting, group = interaction(Weighting, Immute), linetype = Immute)) +
+  geom_line(linewidth = 0.4) + 
+  geom_point(aes(shape = Immute), size = 1) +  # Keep points for the immutability legend
+  scale_color_manual(values = c("OLS" = "blue", "WLSs" = "darkgreen", "WLSv" = "red", "MinT(Sample)" = "violet", "MinT(Shrink)" = "orange")) + 
+  scale_linetype_manual(values = c("I" = "dashed", "I-MinT" = "solid")) +
+  labs(title = "Forecast Accuracies by Levels of the Structure (ETS+ETS) - Scenario 1",
+       x = "Forecast Horizon (Months)",
+       y = "% Deviation from Base Forecast MSE",
+       color = "W matrix",
+       shape = "Immutability",
+       linetype = "Immutability") +
+  geom_hline(yintercept = 0, color = "black", size = 0.2) +
+  theme_minimal() +
+  facet_wrap(~Category, scales = "free_y", ncol = 3) +
+  guides(
+    color = guide_legend(override.aes = list(shape = NA)),  # Remove dots from W matrix legend
+   # shape = guide_legend(override.aes = list(linetype = "blank"))  # Keep dots for Immutability legend
+  ) +
+  theme(
+    plot.title = element_text(size = 10, face = "bold"), 
+    axis.title = element_text(size = 8), 
+    axis.text = element_text(size = 6),
+    legend.title = element_text(size = 8, face = "bold"),  
+    legend.text = element_text(size = 6),  
+    strip.text = element_text(size = 6),
+    aspect.ratio = 1
+  )
+
+```
+
+&nbsp;
+
+```{r, message=FALSE,  warning=FALSE, include=FALSE}
+cnames_chart <- c("Method", "1", "3", "6", "12", "24")
+
+colnames(total_ea) <- cnames_chart
+colnames(middle_ea) <- cnames_chart
+colnames(bottom_ea) <- cnames_chart
+colnames(all_ea) <- cnames_chart
+
+labels <- c(rep("Total", nrow(total_ea) - 1),
+            rep("Middle", nrow(middle_ea) - 1),
+            rep("Bottom", nrow(bottom_ea) - 1),
+            rep("All series", nrow(all_ea) - 1))
+
+series_ea <- rbind(total_ea[-1,], 
+                middle_ea[-1,],
+                bottom_ea[-1,],
+                all_ea[-1,])
+
+series_ea$Category <- labels
+
+series_ea <- series_ea %>%
+  mutate(Weighting = case_when(
+    grepl("ols", Method) ~ "OLS",
+    grepl("wlss", Method) ~ "WLSs",
+    grepl("wlsv", Method) ~ "WLSv",
+    grepl("sam", Method) ~ "MinT(Sample)",
+    grepl("shrink", Method) ~ "MinT(Shrink)"
+  ),
+  Immute = case_when(
+    grepl("I", Method) ~ "I",
+    grepl("iMinT", Method) ~ "I-MinT"
+  ))
+
+series_ea_long <- series_ea %>%
+  pivot_longer(cols = 2:6, 
+               names_to = "Horizon", 
+               values_to = "PC") 
+
+series_ea_long$Horizon <- factor(series_ea_long$Horizon, 
+                               levels = c("1", "3", "6", "12", "24"))
+
+
+series_ea_long %>% 
+#  filter(Weighting == "WLSv") %>% 
+  filter(Category != "Total") %>% 
+  ggplot(aes(x = Horizon, y = PC, color = Weighting, group = interaction(Weighting, Immute), linetype = Immute)) +
+  geom_line(linewidth = 0.4) + 
+  geom_point(aes(shape = Immute), size = 1) +  # Keep points for the immutability legend
+  scale_color_manual(values = c("OLS" = "blue", "WLSs" = "darkgreen", "WLSv" = "red", "MinT(Sample)" = "violet", "MinT(Shrink)" = "orange")) + 
+  scale_linetype_manual(values = c("I" = "dashed", "I-MinT" = "solid")) +
+  labs(title = "Forecast Accuracies by Levels of the Structure (ETS+ARIMA) - Scenario 1",
+       x = "Forecast Horizon (Months)",
+       y = "% Deviation from Base Forecast MSE",
+       color = "W matrix",
+       shape = "Immutability",
+       linetype = "Immutability") +
+  geom_hline(yintercept = 0, color = "black", size = 0.2) +
+  theme_minimal() +
+  facet_wrap(~Category, scales = "free_y", ncol = 3) +
+  guides(
+    color = guide_legend(override.aes = list(shape = NA)),  # Remove dots from W matrix legend
+   # shape = guide_legend(override.aes = list(linetype = "blank"))  # Keep dots for Immutability legend
+  ) +
+  theme(
+    plot.title = element_text(size = 10, face = "bold"), 
+    axis.title = element_text(size = 8), 
+    axis.text = element_text(size = 6),
+    legend.title = element_text(size = 8, face = "bold"),  
+    legend.text = element_text(size = 6),  
+    strip.text = element_text(size = 6),
+    aspect.ratio = 1
+  )
+
+```
+
+```{r, fig.height=10, include=FALSE}
+series_long %>% 
+#  filter(Weighting == "WLSv") %>% 
+#  filter(Category != "Total") %>% 
+  ggplot(aes(x = Horizon, y = PC, color = Weighting, group = interaction(Weighting, Immute), linetype = Immute)) +
+  geom_line(linewidth = 0.4) + 
+  geom_point(aes(shape = Immute), size = 1) +  # Keep points for the immutability legend
+  scale_color_manual(values = c("OLS" = "blue", "WLSs" = "darkgreen", "WLSv" = "red", "MinT(Shrink)" = "orange")) + 
+  scale_linetype_manual(values = c("I" = "dashed", "I-MinT" = "solid")) +
+  labs(title = "Forecast Accuracies by Reconciliation Method (ETS+ETS) - Scenario 1",
+       x = "Forecast Horizon (Months)",
+       y = "% Deviation from Base Forecast MSE",
+       color = "W matrix",
+       shape = "Immutability",
+       linetype = "Immutability") +
+  geom_hline(yintercept = 0, color = "black", size = 0.2) +
+  theme_minimal() +
+  facet_wrap(Category~Weighting, scales = "free_y", ncol = 5) +
+  guides(
+    color = guide_legend(override.aes = list(shape = NA)),  # Remove dots from W matrix legend
+   # shape = guide_legend(override.aes = list(linetype = "blank"))  # Keep dots for Immutability legend
+  ) +
+  theme(
+    plot.title = element_text(size = 10, face = "bold"), 
+    axis.title = element_text(size = 8), 
+    axis.text = element_text(size = 6),
+    legend.title = element_text(size = 8, face = "bold"),  
+    legend.text = element_text(size = 6),  
+    strip.text = element_text(size = 6),
+    aspect.ratio = 0.8
+  )
+
+```
+
+```{r, fig.height=10, include=FALSE}
+series_ea_long %>% 
+#  filter(Weighting == "WLSv") %>% 
+# filter(Category != "Total") %>% 
+  ggplot(aes(x = Horizon, y = PC, color = Weighting, group = interaction(Weighting, Immute), linetype = Immute)) +
+  geom_line(linewidth = 0.4) + 
+  geom_point(aes(shape = Immute), size = 1) +  # Keep points for the immutability legend
+  scale_color_manual(values = c("OLS" = "blue", "WLSs" = "darkgreen", "WLSv" = "red", "MinT(Shrink)" = "orange")) + 
+  scale_linetype_manual(values = c("I" = "dashed", "I-MinT" = "solid")) +
+  labs(title = "Forecast Accuracies by Reconciliation Method (ETS+ARIMA) - Scenario 1",
+       x = "Forecast Horizon (Months)",
+       y = "% Deviation from Base Forecast MSE",
+       color = "W matrix",
+       shape = "Immutability",
+       linetype = "Immutability") +
+  geom_hline(yintercept = 0, color = "black", linewidth = 0.2) +
+  theme_minimal() +
+  facet_wrap(Category~Weighting, scales = "free_y", ncol = 5) +
+  guides(
+    color = guide_legend(override.aes = list(shape = NA)),  # Remove dots from W matrix legend
+   # shape = guide_legend(override.aes = list(linetype = "blank"))  # Keep dots for Immutability legend
+  ) +
+  theme(
+    plot.title = element_text(size = 10, face = "bold"), 
+    axis.title = element_text(size = 8), 
+    axis.text = element_text(size = 6),
+    legend.title = element_text(size = 8, face = "bold"),  
+    legend.text = element_text(size = 6),  
+    strip.text = element_text(size = 6),
+    aspect.ratio = 0.8
+  )
+
+
+```
+
+
+\newpage
+## Scenario 2
+
+### ETS + ETS
+```{r, results = 'asis', message=FALSE}
+pc1_s2 <- read_csv("pc/pc1_s2.csv")
+pc3_s2 <- read_csv("pc/pc3_s2.csv")
+pc6_s2 <- read_csv("pc/pc6_s2.csv")
+pc12_s2 <- read_csv("pc/pc12_s2.csv")
+pc24_s2 <- read_csv("pc/pc24_s2.csv")
+
+cnames <- c("Method", "h = 1", "3", "6", "12", "24")
+cnames2 <- c("M", "h1", "h3", "h6", "h12", "h24")
+
+total_s2 <- data.frame("method" = pc1_s2[,1], 
+                     "h = 1" = pc1_s2[,2],
+                     "3" = pc3_s2[,2],
+                     "6" = pc6_s2[,2],
+                     "12" = pc12_s2[,2],
+                      "24" = pc24_s2[,2]) %>% 
+  mutate(across(where(is.numeric), ~ round(., 3)))
+colnames(total_s2) <- cnames
+
+middle_s2 <- data.frame("method" = pc1_s2[,1], 
+                     "h = 1" = pc1_s2[,3],
+                     "3" = pc3_s2[,3],
+                     "6" = pc6_s2[,3],
+                     "12" = pc12_s2[,3],
+                      "24" = pc24_s2[,3]) %>% 
+  mutate(across(where(is.numeric), ~ round(., 3)))
+colnames(middle_s2) <- cnames2
+
+bottom_s2 <- data.frame("method" = pc1_s2[,1], 
+                     "h = 1" = pc1_s2[,4],
+                     "3" = pc3_s2[,4],
+                     "6" = pc6_s2[,4],
+                     "12" = pc12_s2[,4],
+                      "24" = pc24_s2[,4]) %>% 
+  mutate(across(where(is.numeric), ~ round(., 3)))
+colnames(bottom_s2) <- cnames
+
+all_s2 <- data.frame("method" = pc1_s2[,1], 
+                     "h = 1" = pc1_s2[,5],
+                     "3" = pc3_s2[,5],
+                     "6" = pc6_s2[,5],
+                     "12" = pc12_s2[,5],
+                      "24" = pc24_s2[,5]) %>% 
+  mutate(across(where(is.numeric), ~ round(., 3)))
+colnames(all_s2) <- cnames2
+
+all_total_s2 <- cbind(all_s2, total_s2[,-1]) %>% 
+  slice(c(1, 2, 7, 3, 8, 4, 9, 5, 10, 6, 11)) %>% 
+  mutate(W = c("Base", "OLS", "OLS", "WLSs", "WLSs", "WLSv", "WLSv", "MinT(Sample)", "MinT(Sample)",
+               "MinT(Shrink)", "MinT(Shrink)"),
+    ImmuteMethod = c(" ", "I", "I-MinT", "I", "I-MinT", "I", "I-MinT", "I", "I-MinT", "I", "I-MinT")) %>% 
+  select(c(12,13,2:11))
+  
+mid_bottom_s2 <- cbind(middle_s2, bottom_s2[,-1]) %>% 
+  slice(c(1, 2, 7, 3, 8, 4, 9, 5, 10, 6, 11)) %>% 
+  mutate(W = c("Base", "OLS", "OLS", "WLSs", "WLSs", "WLSv", "WLSv", "MinT(Sample)", "MinT(Sample)",
+               "MinT(Shrink)", "MinT(Shrink)"),
+    ImmuteMethod = c(" ", "I", "I-MinT", "I", "I-MinT", "I", "I-MinT", "I", "I-MinT", "I", "I-MinT")) %>% 
+  select(c(12,13,2:11))
+
+#### Tables ####
+
+at_table_s2 <- all_total_s2 %>% 
+  kable(escape = FALSE,
+        caption="\\label{tab:tourismets}Out-of-sample forecast accuracy for ETS forecasts for all levels under Scenario 2.",
+        col.names = c(" ", " ", "h = 1", "3", "6", "12", "24", "h = 1", "3", "6", "12", "24")
+        ) %>% 
+  kable_styling(full_width = FALSE,
+                latex_options = c("hold_position"),
+                font_size = 7) %>% 
+  add_header_above(c(" " =2, "All Series" = 5, "Total" = 5), bold = TRUE) %>% 
+  add_header_above(c("ETS+ETS"=12), bold = TRUE) %>% 
+  column_spec(c(1), width = "1.5cm") %>% 
+  column_spec(c(2), width = "1cm") %>%
+  column_spec(3, bold = ifelse(all_total_s2$`h1`==min(all_total_s2$`h1`), T, F), width = "1cm") %>% 
+  column_spec(4, bold = ifelse(all_total_s2$`h3`==min(all_total_s2$`h3`), T, F), width = "1cm") %>% 
+  column_spec(5, bold = ifelse(all_total_s2$`h6`==min(all_total_s2$`h6`), T, F), width = "1cm") %>% 
+  column_spec(6, bold = ifelse(all_total_s2$`h12`==min(all_total_s2$`h12`), T, F), width = "1cm") %>% 
+  column_spec(7, bold = ifelse(all_total_s2$`h24`==min(all_total_s2$`h24`), T, F), width = "1cm") %>% 
+  column_spec(8:12, width = "1cm") %>% 
+  row_spec(1, bold = FALSE, italic = TRUE) %>% 
+  collapse_rows(1, latex_hline ="major")
+
+
+mb_table_s2 <- mid_bottom_s2 %>% 
+  kable(escape = FALSE,
+      #  caption="\\label{tab:tourismets}Out-of-sample forecast accuracy for ETS forecasts for all levels under Scenario 1.",
+        col.names = c(" ", " ", "h = 1", "3", "6", "12", "24", "h = 1", "3", "6", "12", "24")
+        ) %>% 
+  kable_styling(full_width = FALSE,
+                latex_options = c("hold_position"),
+                font_size = 7) %>% 
+  add_header_above(c(" " =2, "Middle" = 5, "Bottom" = 5), bold = TRUE) %>% 
+  column_spec(c(1), width = "1.5cm") %>% 
+  column_spec(c(2), width = "1cm") %>%
+  column_spec(3, bold = ifelse(mid_bottom_s2$`h1`==min(mid_bottom_s2$`h1`), T, F), width = "1cm") %>% 
+  column_spec(4, bold = ifelse(mid_bottom_s2$`h3`==min(mid_bottom_s2$`h3`), T, F), width = "1cm") %>% 
+  column_spec(5, bold = ifelse(mid_bottom_s2$`h6`==min(mid_bottom_s2$`h6`), T, F), width = "1cm") %>% 
+  column_spec(6, bold = ifelse(mid_bottom_s2$`h12`==min(mid_bottom_s2$`h12`), T, F), width = "1cm") %>% 
+  column_spec(7, bold = ifelse(mid_bottom_s2$`h24`==min(mid_bottom_s2$`h24`), T, F), width = "1cm") %>% 
+  column_spec(8, bold = ifelse(mid_bottom_s2$`h = 1`==min(mid_bottom_s2$`h = 1`), T, F), width = "1cm") %>% 
+  column_spec(9, bold = ifelse(mid_bottom_s2$`3`==min(mid_bottom_s2$`3`), T, F), width = "1cm") %>% 
+  column_spec(10, bold = ifelse(mid_bottom_s2$`6`==min(mid_bottom_s2$`6`), T, F), width = "1cm") %>% 
+  column_spec(11, bold = ifelse(mid_bottom_s2$`12`==min(mid_bottom_s2$`12`), T, F), width = "1cm") %>% 
+  column_spec(12, bold = ifelse(mid_bottom_s2$`24`==min(mid_bottom_s2$`24`), T, F), width = "1cm") %>% 
+  row_spec(1, bold = FALSE, italic = TRUE) %>% 
+  collapse_rows(1, latex_hline ="major")
+
+cat(paste0(at_table_s2, "\\vspace{-2.5em}", mb_table_s2), sep = "")
+
+```
+
+\newpage
+Scenario 2
+
+### ETS + ARIMA
+```{r, results = 'asis', message=FALSE}
+pc1_ea_s2 <- read_csv("pc/pc1_ea_s2.csv")
+pc3_ea_s2 <- read_csv("pc/pc3_ea_s2.csv")
+pc6_ea_s2 <- read_csv("pc/pc6_ea_s2.csv")
+pc12_ea_s2 <- read_csv("pc/pc12_ea_s2.csv")
+pc24_ea_s2 <- read_csv("pc/pc24_ea_s2.csv")
+
+cnames <- c("Method", "h = 1", "3", "6", "12", "24")
+cnames2 <- c("M", "h1", "h3", "h6", "h12", "h24")
+
+total_ea_s2 <- data.frame("method" = pc1_ea_s2[,1], 
+                     "h = 1" = pc1_ea_s2[,2],
+                     "3" = pc3_ea_s2[,2],
+                     "6" = pc6_ea_s2[,2],
+                     "12" = pc12_ea_s2[,2],
+                     "24" = pc24_ea_s2[,2]) %>% 
+  mutate(across(where(is.numeric), ~ round(., 3)))
+colnames(total_ea_s2) <- cnames
+
+middle_ea_s2 <- data.frame("method" = pc1_ea_s2[,1], 
+                     "h = 1" = pc1_ea_s2[,3],
+                     "3" = pc3_ea_s2[,3],
+                     "6" = pc6_ea_s2[,3],
+                     "12" = pc12_ea_s2[,3],
+                      "24" = pc24_ea_s2[,3]) %>% 
+  mutate(across(where(is.numeric), ~ round(., 3)))
+colnames(middle_ea_s2) <- cnames2
+
+bottom_ea_s2 <- data.frame("method" = pc1_ea_s2[,1], 
+                     "h = 1" = pc1_ea_s2[,4],
+                     "3" = pc3_ea_s2[,4],
+                     "6" = pc6_ea_s2[,4],
+                     "12" = pc12_ea_s2[,4],
+                      "24" = pc24_ea_s2[,4]) %>% 
+  mutate(across(where(is.numeric), ~ round(., 3)))
+colnames(bottom_ea_s2) <- cnames
+
+all_ea_s2 <- data.frame("method" = pc1_ea_s2[,1], 
+                     "h = 1" = pc1_ea_s2[,5],
+                     "3" = pc3_ea_s2[,5],
+                     "6" = pc6_ea_s2[,5],
+                     "12" = pc12_ea_s2[,5],
+                      "24" = pc24_ea_s2[,5]) %>% 
+  mutate(across(where(is.numeric), ~ round(., 3)))
+colnames(all_ea_s2) <- cnames2
+
+all_total_ea_s2 <- cbind(all_ea_s2, total_ea_s2[,-1]) %>% 
+  slice(c(1, 2, 7, 3, 8, 4, 9, 5, 10, 6, 11)) %>% 
+  mutate(W = c("Base", "OLS", "OLS", "WLSs", "WLSs", "WLSv", "WLSv", "MinT(Sample)", "MinT(Sample)",
+               "MinT(Shrink)", "MinT(Shrink)"),
+    ImmuteMethod = c(" ", "I", "I-MinT", "I", "I-MinT", "I", "I-MinT", "I", "I-MinT", "I", "I-MinT")) %>% 
+  select(c(12,13,2:11))
+  
+mid_bottom_ea_s2 <- cbind(middle_ea_s2, bottom_ea_s2[,-1]) %>% 
+  slice(c(1, 2, 7, 3, 8, 4, 9, 5, 10, 6, 11)) %>% 
+  mutate(W = c("Base", "OLS", "OLS", "WLSs", "WLSs", "WLSv", "WLSv", "MinT(Sample)", "MinT(Sample)",
+               "MinT(Shrink)", "MinT(Shrink)"),
+    ImmuteMethod = c(" ", "I", "I-MinT", "I", "I-MinT", "I", "I-MinT", "I", "I-MinT", "I", "I-MinT")) %>% 
+  select(c(12,13,2:11))
+
+#### Tables ####
+
+at_table_ea_s2 <- all_total_ea_s2 %>% 
+  kable(escape = FALSE,
+        caption="\\label{tab:tourismets}Out-of-sample forecast accuracy when ETS forecasts at top-level and ARIMA forecasts for other levels - under Scenario 2.",
+        col.names = c(" ", " ", "h = 1", "3", "6", "12", "24", "h = 1", "3", "6", "12", "24")
+        ) %>% 
+  kable_styling(full_width = FALSE,
+                latex_options = c("hold_position"),
+                font_size = 7) %>% 
+  add_header_above(c(" " =2, "All Series" = 5, "Total" = 5), bold = TRUE) %>% 
+  add_header_above(c("ETS+ARIMA"=12), bold = TRUE) %>% 
+  column_spec(c(1), width = "1.5cm") %>% 
+  column_spec(c(2), width = "1cm") %>%
+  column_spec(3, bold = ifelse(all_total_ea_s2$`h1`==min(all_total_ea_s2$`h1`), T, F), width = "1cm") %>% 
+  column_spec(4, bold = ifelse(all_total_ea_s2$`h3`==min(all_total_ea_s2$`h3`), T, F), width = "1cm") %>% 
+  column_spec(5, bold = ifelse(all_total_ea_s2$`h6`==min(all_total_ea_s2$`h6`), T, F), width = "1cm") %>% 
+  column_spec(6, bold = ifelse(all_total_ea_s2$`h12`==min(all_total_ea_s2$`h12`), T, F), width = "1cm") %>% 
+  column_spec(7, bold = ifelse(all_total_ea_s2$`h24`==min(all_total_ea_s2$`h24`), T, F), width = "1cm") %>% 
+  column_spec(8:12, width = "1cm") %>% 
+  row_spec(1, bold = FALSE, italic = TRUE) %>% 
+  collapse_rows(1, latex_hline ="major")
+
+
+mb_table_ea_s2 <- mid_bottom_ea_s2 %>% 
+  kable(escape = FALSE,
+      #  caption="\\label{tab:tourismets}Out-of-sample forecast accuracy for ETS forecasts for all levels under Scenario 1.",
+        col.names = c(" ", " ", "h = 1", "3", "6", "12", "24", "h = 1", "3", "6", "12", "24")
+        ) %>% 
+  kable_styling(full_width = FALSE,
+                latex_options = c("hold_position"),
+                font_size = 7) %>% 
+  add_header_above(c(" " =2, "Middle" = 5, "Bottom" = 5), bold = TRUE) %>% 
+  column_spec(c(1), width = "1.5cm") %>% 
+  column_spec(c(2), width = "1cm") %>%
+  column_spec(3, bold = ifelse(mid_bottom_ea_s2$`h1`==min(mid_bottom_ea_s2$`h1`), T, F), width = "1cm") %>% 
+  column_spec(4, bold = ifelse(mid_bottom_ea_s2$`h3`==min(mid_bottom_ea_s2$`h3`), T, F), width = "1cm") %>% 
+  column_spec(5, bold = ifelse(mid_bottom_ea_s2$`h6`==min(mid_bottom_ea_s2$`h6`), T, F), width = "1cm") %>% 
+  column_spec(6, bold = ifelse(mid_bottom_ea_s2$`h12`==min(mid_bottom_ea_s2$`h12`), T, F), width = "1cm") %>% 
+  column_spec(7, bold = ifelse(mid_bottom_ea_s2$`h24`==min(mid_bottom_ea_s2$`h24`), T, F), width = "1cm") %>% 
+  column_spec(8, bold = ifelse(mid_bottom_ea_s2$`h = 1`==min(mid_bottom_ea_s2$`h = 1`), T, F), width = "1cm") %>% 
+  column_spec(9, bold = ifelse(mid_bottom_ea_s2$`3`==min(mid_bottom_ea_s2$`3`), T, F), width = "1cm") %>% 
+  column_spec(10, bold = ifelse(mid_bottom_ea_s2$`6`==min(mid_bottom_ea_s2$`6`), T, F), width = "1cm") %>% 
+  column_spec(11, bold = ifelse(mid_bottom_ea_s2$`12`==min(mid_bottom_ea_s2$`12`), T, F), width = "1cm") %>% 
+  column_spec(12, bold = ifelse(mid_bottom_ea_s2$`24`==min(mid_bottom_ea_s2$`24`), T, F), width = "1cm") %>% 
+  row_spec(1, bold = FALSE, italic = TRUE) %>% 
+  collapse_rows(1, latex_hline ="major")
+
+cat(paste0(at_table_ea_s2, "\\vspace{-2.5em}", mb_table_ea_s2), sep = "")
+
+```
+
+
+```{r, message=FALSE,  warning=FALSE, include=FALSE}
+cnames_chart <- c("Method", "1", "3", "6", "12", "24")
+
+colnames(total_s2) <- cnames_chart
+colnames(middle_s2) <- cnames_chart
+colnames(bottom_s2) <- cnames_chart
+colnames(all_s2) <- cnames_chart
+
+labels <- c(rep("Total", nrow(total_s2) - 1),
+            rep("Middle", nrow(middle_s2) - 1),
+            rep("Bottom", nrow(bottom_s2) - 1),
+            rep("All series", nrow(all_s2) - 1))
+
+series_s2 <- rbind(total_s2[-1,], 
+                middle_s2[-1,],
+                bottom_s2[-1,],
+                all_s2[-1,])
+
+series_s2$Category <- labels
+
+series_s2 <- series_s2 %>%
+  mutate(Weighting = case_when(
+    grepl("ols", Method) ~ "OLS",
+    grepl("wlss", Method) ~ "WLSs",
+    grepl("wlsv", Method) ~ "WLSv",
+    grepl("sam", Method) ~ "MinT(Sample)",
+    grepl("shrink", Method) ~ "MinT(Shrink)"
+  ),
+  Immute = case_when(
+    grepl("I", Method) ~ "I",
+    grepl("iMinT", Method) ~ "I-MinT"
+  ))
+
+series_s2_long <- series_s2 %>%
+  pivot_longer(cols = 2:6, 
+               names_to = "Horizon", 
+               values_to = "PC") 
+
+series_s2_long$Horizon <- factor(series_s2_long$Horizon, 
+                               levels = c("1", "3", "6", "12", "24"))
+
+
+series_s2_long %>% 
+#  filter(Weighting == "WLSv") %>% 
+  filter(Category != "Total") %>% 
+  ggplot(aes(x = Horizon, y = PC, color = Weighting, group = interaction(Weighting, Immute), linetype = Immute)) +
+  geom_line(linewidth = 0.4) + 
+  geom_point(aes(shape = Immute), size = 1) +  # Keep points for the immutability legend
+  scale_color_manual(values = c("OLS" = "blue", "WLSs" = "darkgreen", "WLSv" = "red", "MinT(Sample)" = "violet", "MinT(Shrink)" = "orange")) + 
+  scale_linetype_manual(values = c("I" = "dashed", "I-MinT" = "solid")) +
+  labs(title = "Forecast Accuracies by Levels of the Structure (ETS+ETS) - Scenario 2",
+       x = "Forecast Horizon (Months)",
+       y = "% Deviation from Base Forecast MSE",
+       color = "W matrix",
+       shape = "Immutability",
+       linetype = "Immutability") +
+  geom_hline(yintercept = 0, color = "black", size = 0.2) +
+  theme_minimal() +
+  facet_wrap(~Category, scales = "free_y", ncol = 3) +
+  guides(
+    color = guide_legend(override.aes = list(shape = NA)),  # Remove dots from W matrix legend
+   # shape = guide_legend(override.aes = list(linetype = "blank"))  # Keep dots for Immutability legend
+  ) +
+  theme(
+    plot.title = element_text(size = 10, face = "bold"), 
+    axis.title = element_text(size = 8), 
+    axis.text = element_text(size = 6),
+    legend.title = element_text(size = 8, face = "bold"),  
+    legend.text = element_text(size = 6),  
+    strip.text = element_text(size = 6),
+    aspect.ratio = 1
+  )
+
+```
+
+&nbsp;
+
+```{r, message=FALSE,  warning=FALSE, include=FALSE}
+cnames_chart <- c("Method", "1", "3", "6", "12", "24")
+
+colnames(total_ea_s2) <- cnames_chart
+colnames(middle_ea_s2) <- cnames_chart
+colnames(bottom_ea_s2) <- cnames_chart
+colnames(all_ea_s2) <- cnames_chart
+
+labels <- c(rep("Total", nrow(total_ea_s2) - 1),
+            rep("Middle", nrow(middle_ea_s2) - 1),
+            rep("Bottom", nrow(bottom_ea_s2) - 1),
+            rep("All series", nrow(all_ea_s2) - 1))
+
+series_ea_s2 <- rbind(total_ea_s2[-1,], 
+                middle_ea_s2[-1,],
+                bottom_ea_s2[-1,],
+                all_ea_s2[-1,])
+
+series_ea_s2$Category <- labels
+
+series_ea_s2 <- series_ea_s2 %>%
+  mutate(Weighting = case_when(
+    grepl("ols", Method) ~ "OLS",
+    grepl("wlss", Method) ~ "WLSs",
+    grepl("wlsv", Method) ~ "WLSv",
+    grepl("sam", Method) ~ "MinT(Sample)",
+    grepl("shrink", Method) ~ "MinT(Shrink)"
+  ),
+  Immute = case_when(
+    grepl("I", Method) ~ "I",
+    grepl("iMinT", Method) ~ "I-MinT"
+  ))
+
+series_ea_s2_long <- series_ea_s2 %>%
+  pivot_longer(cols = 2:6, 
+               names_to = "Horizon", 
+               values_to = "PC") 
+
+series_ea_s2_long$Horizon <- factor(series_ea_s2_long$Horizon, 
+                               levels = c("1", "3", "6", "12", "24"))
+
+
+series_ea_s2_long %>% 
+#  filter(Weighting == "WLSv") %>% 
+  filter(Category != "Total") %>% 
+  ggplot(aes(x = Horizon, y = PC, color = Weighting, group = interaction(Weighting, Immute), linetype = Immute)) +
+  geom_line(linewidth = 0.4) + 
+  geom_point(aes(shape = Immute), size = 1) +  # Keep points for the immutability legend
+  scale_color_manual(values = c("OLS" = "blue", "WLSs" = "darkgreen", "WLSv" = "red", "MinT(Sample)" = "violet", "MinT(Shrink)" = "orange")) + 
+  scale_linetype_manual(values = c("I" = "dashed", "I-MinT" = "solid")) +
+  labs(title = "Forecast Accuracies by Levels of the Structure (ETS+ARIMA) - Scenario 2",
+       x = "Forecast Horizon (Months)",
+       y = "% Deviation from Base Forecast MSE",
+       color = "W matrix",
+       shape = "Immutability",
+       linetype = "Immutability") +
+  geom_hline(yintercept = 0, color = "black", size = 0.2) +
+  theme_minimal() +
+  facet_wrap(~Category, scales = "free_y", ncol = 3) +
+  guides(
+    color = guide_legend(override.aes = list(shape = NA)),  # Remove dots from W matrix legend
+   # shape = guide_legend(override.aes = list(linetype = "blank"))  # Keep dots for Immutability legend
+  ) +
+  theme(
+    plot.title = element_text(size = 10, face = "bold"), 
+    axis.title = element_text(size = 8), 
+    axis.text = element_text(size = 6),
+    legend.title = element_text(size = 8, face = "bold"),  
+    legend.text = element_text(size = 6),  
+    strip.text = element_text(size = 6),
+    aspect.ratio = 1
+  )
+
+```
+
+
+```{r, fig.height=10, include=FALSE}
+series_s2_long %>% 
+#  filter(Weighting == "WLSv") %>% 
+#  filter(Category != "Total") %>% 
+  ggplot(aes(x = Horizon, y = PC, color = Weighting, group = interaction(Weighting, Immute), linetype = Immute)) +
+  geom_line(linewidth = 0.4) + 
+  geom_point(aes(shape = Immute), size = 1) +  # Keep points for the immutability legend
+  scale_color_manual(values = c("OLS" = "blue", "WLSs" = "darkgreen", "WLSv" = "red", "MinT(Shrink)" = "orange")) + 
+  scale_linetype_manual(values = c("I" = "dashed", "I-MinT" = "solid")) +
+  labs(title = "Forecast Accuracies by Reconciliation Method (ETS+ETS) - Scenario 2",
+       x = "Forecast Horizon (Months)",
+       y = "% Deviation from Base Forecast MSE",
+       color = "W matrix",
+       shape = "Immutability",
+       linetype = "Immutability") +
+  geom_hline(yintercept = 0, color = "black", size = 0.2) +
+  theme_minimal() +
+  facet_wrap(Category~Weighting, scales = "free_y", ncol = 5) +
+  guides(
+    color = guide_legend(override.aes = list(shape = NA)),  # Remove dots from W matrix legend
+   # shape = guide_legend(override.aes = list(linetype = "blank"))  # Keep dots for Immutability legend
+  ) +
+  theme(
+    plot.title = element_text(size = 10, face = "bold"), 
+    axis.title = element_text(size = 8), 
+    axis.text = element_text(size = 6),
+    legend.title = element_text(size = 8, face = "bold"),  
+    legend.text = element_text(size = 6),  
+    strip.text = element_text(size = 6),
+    aspect.ratio = 0.8
+  )
+
+```
+
+```{r, fig.height=10, include=FALSE}
+series_ea_s2_long %>% 
+#  filter(Weighting == "WLSv") %>% 
+# filter(Category != "Total") %>% 
+  ggplot(aes(x = Horizon, y = PC, color = Weighting, group = interaction(Weighting, Immute), linetype = Immute)) +
+  geom_line(linewidth = 0.4) + 
+  geom_point(aes(shape = Immute), size = 1) +  # Keep points for the immutability legend
+  scale_color_manual(values = c("OLS" = "blue", "WLSs" = "darkgreen", "WLSv" = "red", "MinT(Shrink)" = "orange")) + 
+  scale_linetype_manual(values = c("I" = "dashed", "I-MinT" = "solid")) +
+  labs(title = "Forecast Accuracies by Reconciliation Method (ETS+ARIMA) - Scenario 2",
+       x = "Forecast Horizon (Months)",
+       y = "% Deviation from Base Forecast MSE",
+       color = "W matrix",
+       shape = "Immutability",
+       linetype = "Immutability") +
+  geom_hline(yintercept = 0, color = "black", linewidth = 0.2) +
+  theme_minimal() +
+  facet_wrap(Category~Weighting, scales = "free_y", ncol = 5) +
+  guides(
+    color = guide_legend(override.aes = list(shape = NA)),  # Remove dots from W matrix legend
+   # shape = guide_legend(override.aes = list(linetype = "blank"))  # Keep dots for Immutability legend
+  ) +
+  theme(
+    plot.title = element_text(size = 10, face = "bold"), 
+    axis.title = element_text(size = 8), 
+    axis.text = element_text(size = 6),
+    legend.title = element_text(size = 8, face = "bold"),  
+    legend.text = element_text(size = 6),  
+    strip.text = element_text(size = 6),
+    aspect.ratio = 0.8
+  )
+
+
+```
+
+
+
+
